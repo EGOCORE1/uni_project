@@ -71,7 +71,7 @@ eventSchema.index({ status: 1, eventDate: 1 });
 /*
 Virtual field لحساب المقاعد المتبقية
 */
-eventSchema.virtual("remainingSeats").get(function () {
+eventSchema.virtual("remainingSeats").get(() => {
   return this.capacity - this.registeredCount;
 });
 
