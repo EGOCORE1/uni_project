@@ -63,14 +63,14 @@ const eventSchema = new mongoose.Schema(
   }
 );
 
-/*
-Index لتحسين البحث عن الفعاليات القادمة
-*/
+
+// Index لتحسين البحث عن الفعاليات القادمة
+
 eventSchema.index({ status: 1, eventDate: 1 });
 
-/*
-Virtual field لحساب المقاعد المتبقية
-*/
+
+// Virtual field لحساب المقاعد المتبقية
+
 eventSchema.virtual("remainingSeats").get(() => {
   return this.capacity - this.registeredCount;
 });
