@@ -38,16 +38,9 @@ const eventSchema = new mongoose.Schema(
       default: 0,
     },
 
-    supervisors: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-      },
-    ],
-
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: "userSchema",
       required: true,
     },
 
