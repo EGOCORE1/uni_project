@@ -3,16 +3,16 @@ const router = express.Router();
 const { registerUser, loginUser } = require('../controllers/userAuth');
 const authMiddleware = require('../middlewares/authmiddlewares')
 const roleMiddleware = require('../middlewares/rolemiddlewares')
-const {validateCreateEvent} = require('../validators/eventValidator')
-const {createEvent , getAllEvents , getSingleEvent} = require('../controllers/eventControllers')
+const { validateCreateEvent } = require('../validators/eventValidator')
+const { createEvent, getAllEvents, getSingleEvent , updateEvent} = require('../controllers/eventControllers')
 
-router.post("/register",registerUser);
-router.post("/login" , loginUser);
+router.post("/register", registerUser);
+router.post("/login", loginUser);
 
 // event action 
-
-router.post("/createEvent" , validateCreateEvent ,authMiddleware , roleMiddleware("admin") , createEvent)
-router.get("/getAllEvents" , authMiddleware , getAllEvents) 
-router.get("/:id" , authMiddleware , getSingleEvent) 
+router.post("/createEvent", validateCreateEvent, authMiddleware, roleMiddleware("admin"), createEvent)
+router.get("/getAllEvents", authMiddleware, getAllEvents)
+router.get("/:id", authMiddleware, getSingleEvent)
+router.put("/updateEvent/:id", validateCreateEvent, authMiddleware , roleMiddleware("admin") , updateEvent )
 
 module.exports = router;

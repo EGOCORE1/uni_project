@@ -85,8 +85,74 @@ const getSingleEvent = async (req, res) => {
     }
 };
 
+const updateEvent = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(id))
+            return res.status(403).json({ msg: `Invalid event ID` })
+
+        const err = validationResult(req)
+        if (err.isEmpty())
+            return res.status(403).json({ err: err.message })
+
+        const event = await eventSchema.findById(id)
+        if (!event)
+            return res.status(402).json({ msg: `Event ID is undifinded` })
+
+        if (req.body.eventDate && new Date(req.body.eventDate) < new Date()) {
+            return res.status(400).json({
+                message: "Event date must be in the future"
+            });
+        }
+
+        const allowedFields = [
+            "title",
+            "description",
+            "location",
+            "eventDate",
+            "capacity",
+            "supervisors",
+            "status"
+        ];
+        const updateData = {};
+
+        allowedFields.forEach(field => {
+            if (req.body[field] !== undefined) {
+                updateData[field] = req.body[field];
+            }
+        });
+
+        const updatedEvent = await eventSchema.findByIdAndUpdate(
+            id,
+            updateData,
+            {
+                new: true, // يرجع النسخة بعد التحديث
+                runValidators: true
+            }
+        )
+            .populate("createdBy", "name email")
+
+        res.status(200).json({
+            message: "Event updated successfully",
+            data: updatedEvent
+        });
+
+    } catch (error) {
+
+        console.error("Update Event Error:", error);
+
+        res.status(500).json({
+            message: "Internal server error"
+        });
+
+    };
+}
+
+
 module.exports = {
     createEvent,
     getAllEvents,
-    getSingleEvent
+    getSingleEvent,
+    updateEvent
 }
