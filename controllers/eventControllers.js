@@ -150,9 +150,53 @@ const updateEvent = async (req, res) => {
 }
 
 
+const deleteEvent = async (req, res) => {
+    try {
+        
+        const { id } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({
+                message: "Invalid event ID"
+            });
+        }
+        
+        const event = await eventSchema.findById(id);
+
+        if (!event) {
+            return res.status(404).json({
+                message: "Event not found"
+            });
+        }
+        
+        if ( req.user.role !== "admin" ) {
+            return res.status(403).json({
+                message: "Not authorized to delete this event"
+            });
+        }
+        
+        await eventSchema.findByIdAndDelete(id);
+
+        return res.status(200).json({
+            message: "Event deleted successfully"
+        });
+        
+    } catch (error) {
+
+        console.error("Delete Event Error:", error);
+
+        res.status(500).json({
+            message: "Internal server error"
+        });
+
+    }
+};
+
+
 module.exports = {
     createEvent,
     getAllEvents,
     getSingleEvent,
-    updateEvent
+    updateEvent,
+    deleteEvent
 }
