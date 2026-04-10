@@ -1,21 +1,24 @@
-const dotenv = require('dotenv').config()
-const express = require('express')
-const connectDB = require('./config/DB')
-const authRoutes = require('./routes/authRoutes')
+import express from 'express';
+import dotenv from 'dotenv';
+import cors from 'cors';
+import userRoutes from './routes/userAuth.js';
+import eventRoutes from './routes/eventAuth.js';
 
-const port = 4000
-const app = express()
+dotenv.config();
 
+const app = express();
+const port = process.env.PORT || 4000;
+
+app.use(cors());
 app.use(express.json());
-app.use('/api/auth', authRoutes);
 
-const start = async () => {
-    try {
-        await connectDB(process.env.MONGO_URI)
-        app.listen(port, () => console.log(`Server running on port ${port} &  MongoDB Connected ✅`))
-    } catch (error) {
+app.use('/api/users', userRoutes);
+app.use('/api/events', eventRoutes);
 
-        console.log(error);
-    }
-}
-start()
+app.get('/', (req, res) => {
+    res.send('Server is running ✅');
+});
+
+app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+});

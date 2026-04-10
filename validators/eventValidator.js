@@ -1,7 +1,6 @@
-const { body } = require("express-validator");
+import { body } from 'express-validator';
 
-const validateCreateEvent = [
-
+export const validateCreateEvent = [
   body("title")
     .trim()
     .notEmpty()
@@ -11,8 +10,7 @@ const validateCreateEvent = [
 
   body("description")
     .trim()
-    .notEmpty()
-    .withMessage("Description is required")
+    .optional() 
     .isLength({ min: 10 })
     .withMessage("Description must be at least 10 characters"),
 
@@ -21,20 +19,14 @@ const validateCreateEvent = [
     .notEmpty()
     .withMessage("Location is required"),
 
-  body("capacity")
+  body("maxCapacity") 
     .isInt({ min: 1, max: 1000 })
     .withMessage("Capacity must be between 1 and 1000"),
 
-  body("eventDate")
+  body("date") 
+    .notEmpty()
+    .withMessage("Date is required")
     .isISO8601()
-    .withMessage("Invalid date format")
-    .toDate(),
-
-  body("status")
-    .optional()
-    .isIn(["upcoming", "cancelled", "completed"])
-    .withMessage("Invalid event status")
+    .withMessage("Invalid date format (YYYY-MM-DD)"),
 
 ];
-
-module.exports = { validateCreateEvent };
