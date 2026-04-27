@@ -10,7 +10,7 @@ export const createEvent = async (req, res) => {
             return res.status(400).json({ errors: errors.array() });
         }
 
-        const { title, location, description, date, maxCapacity } = req.body;
+        const { title, location, description, date,event_time,lecturer_name,lecturer_title,session_axes, maxCapacity } = req.body;
 
         if (!title || !location || !date || !maxCapacity) {
             return res.status(400).json({ message: "Please provide all required fields" });
@@ -21,6 +21,10 @@ export const createEvent = async (req, res) => {
               description,
               location,
               date,
+              event_time,
+              lecturer_name,
+              lecturer_title,
+              session_axes,
               maxCapacity,
               organizerId: req.user.id 
         }).returning();
@@ -49,7 +53,8 @@ export const getSingleEvent = async (req, res) => {
           const { id } = req.params;
 
           const event = await db.query.events.findFirst({
-              where: (events, { eq }) => eq(events.id, Number(id))
+              where: (events, { eq }) => eq(events.id, Number(id)),
+              with:{media : true} 
         });
 
         if (!event) {
