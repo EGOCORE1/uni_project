@@ -1,7 +1,9 @@
 import { db } from '../src/db.js'; 
 import { events } from '../src/models/event.js'; 
-import { eq } from 'drizzle-orm';
+import { eq , desc , sql } from 'drizzle-orm';
 import { validationResult } from 'express-validator';
+import {users} from '../src/models/user.js'
+import { registrations } from '../src/models/registration.js';
 
 export const createEvent = async (req, res) => {
   try {
@@ -10,9 +12,9 @@ export const createEvent = async (req, res) => {
             return res.status(400).json({ errors: errors.array() });
         }
 
-        const { title, location, description, date,event_time,lecturer_name,lecturer_title,session_axes, maxCapacity } = req.body;
+        const { title, location, description, event_date,event_time,lecturer_name,lecturer_title,session_axes, maxCapacity } = req.body;
 
-        if (!title || !location || !date || !maxCapacity) {
+        if (!title || !location || !event_date || !maxCapacity) {
             return res.status(400).json({ message: "Please provide all required fields" });
         }
 
@@ -20,7 +22,7 @@ export const createEvent = async (req, res) => {
               title,
               description,
               location,
-              date,
+              event_date,
               event_time,
               lecturer_name,
               lecturer_title,
@@ -41,7 +43,9 @@ export const createEvent = async (req, res) => {
 
 export const getAllEvents = async (req, res) => {
     try {
-        const allEvents = await db.query.events.findMany();
+        const allEvents = await db.query.events.findMany({
+            orderBy : (events , {desc})=>[desc(events.event_date)]
+        });
         res.status(200).json({ events: allEvents });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -65,12 +69,24 @@ export const getSingleEvent = async (req, res) => {
     } catch (error) {
         res.status(500).json({ message: "Internal server error", error: error.message });
     }
+
+};
+export const getLatestEvents = async (req, res) => {
+    try {
+        const latest = await db.query.events.findMany({
+            limit: 3,
+            orderBy: (events, { desc }) => [desc(events.date)]
+        });
+        res.status(200).json({ events: latest });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
 };
 
 export const updateEvent = async (req, res) => {
     try {
         const { id } = req.params;
-        const { title, description, location, date, maxCapacity } = req.body;
+        const {  title, location, description, event_date,event_time,lecturer_name,lecturer_title,session_axes, maxCapacity } = req.body;
 
         const event = await db.query.events.findFirst({
             where: (events, { eq }) => eq(events.id, Number(id))
@@ -82,11 +98,15 @@ export const updateEvent = async (req, res) => {
 
         const updatedEvent = await db.update(events)
             .set({
-                title: title ?? event.title,
-                description: description ?? event.description,
-                location: location ?? event.location,
-                date: date ?? event.date,
-                maxCapacity: maxCapacity ?? event.maxCapacity
+               title: title ?? event.title,
+        description: description ?? event.description,
+        location: location ?? event.location,
+        event_date: event_date ?? event.event_date,
+        event_time: event_time ?? event.event_time, 
+        lecturer_name: lecturer_name ?? event.lecturer_name, 
+        lecturer_title: lecturer_title ?? event.lecturer_title, 
+        session_axes: session_axes ?? event.session_axes, 
+        maxCapacity: maxCapacity ?? event.maxCapacity
             })
             .where(eq(events.id, Number(id)))
             .returning();
@@ -123,5 +143,27 @@ export const deleteEvent = async (req, res) => {
 
     } catch (error) {
         res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+};
+
+export const getRealStats = async (req, res) => {
+    try {
+        const eventsResult = await db.select({ count: sql`count(*)` }).from(events);
+        const beneficiariesResult = await db.select({ count: sql`count(*)` }).from(registrations);
+        const activeMembersCount = await db.select({ count: sql`count(*)` }).from(users);
+
+        res.status(200).json({
+            success: true,
+            data: {
+                totalEvents: eventsResult[0].count,
+                totalBeneficiaries: beneficiariesResult[0].count,
+                activeMembers : activeMembersCount[0].count,
+
+                volunteerHours: 640
+            
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ message: "خطأ في حساب الإحصائيات", error: error.message });
     }
 };

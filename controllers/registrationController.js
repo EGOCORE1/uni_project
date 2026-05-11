@@ -1,5 +1,5 @@
-import { db } from "../db/db.js";
-import { registrations } from "../models/registration.js";
+import { db } from "../src/db.js";
+import { registrations } from "../src/models/registration.js";
 import { eq } from "drizzle-orm";
 
 export const registerToEvent = async (req, res) => {
