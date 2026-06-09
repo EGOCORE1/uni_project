@@ -1,169 +1,130 @@
-import { db } from '../src/db.js'; 
-import { events } from '../src/models/event.js'; 
-import { eq , desc , sql } from 'drizzle-orm';
-import { validationResult } from 'express-validator';
-import {users} from '../src/models/user.js'
+import { db } from '../src/db.js';
+import { events } from '../src/models/event.js';
 import { registrations } from '../src/models/registration.js';
+import { users } from '../src/models/user.js';
+import { eq, desc, sql } from 'drizzle-orm';
+
+const parseEvent = (event) => ({
+    ...event,
+    event_id: event.id,
+    agenda: event.agenda ? JSON.parse(event.agenda) : [],
+    featured: event.featured === 1,
+    media: event.media || []
+});
 
 export const createEvent = async (req, res) => {
-  try {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
-        }
-
-        const { title, location, description, event_date,event_time,lecturer_name,lecturer_title,session_axes, maxCapacity } = req.body;
-
-        if (!title || !location || !event_date || !maxCapacity) {
-            return res.status(400).json({ message: "Please provide all required fields" });
-        }
-
+    try {
+        const { agenda, featured, ...data } = req.body;
         const newEvent = await db.insert(events).values({
-              title,
-              description,
-              location,
-              event_date,
-              event_time,
-              lecturer_name,
-              lecturer_title,
-              session_axes,
-              maxCapacity,
-              organizerId: req.user.id 
+            ...data,
+            agenda: JSON.stringify(agenda),
+            featured: featured ? 1 : 0,
+            organizerId: req.user.id
         }).returning();
-
-        res.status(201).json({
-            message: "Event created successfully",
-            event: newEvent[0]
-        });
-
+        
+        res.status(201).json(parseEvent(newEvent[0]));
     } catch (error) {
-        res.status(500).json({ message: "Server error", error: error.message });
+        res.status(500).json({ message: "Error creating event", error: error.message });
+    }
+};
+export const getActiveEvents = async (req, res) => {
+    try {
+        const active = await db.query.events.findMany({
+            where: (events, { gt }) => gt(events.date, new Date().toISOString().split('T')[0]),
+        });
+        res.status(200).json(active.map(parseEvent));
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
 };
 
-export const getAllEvents = async (req, res) => {
+export const getArchiveEvents = async (req, res) => {
     try {
-        const allEvents = await db.query.events.findMany({
-            orderBy : (events , {desc})=>[desc(events.event_date)]
+        const archive = await db.query.events.findMany({
+            where: (events, { lte }) => lte(events.date, new Date().toISOString().split('T')[0]),
         });
-        res.status(200).json({ events: allEvents });
+        res.status(200).json(archive.map(parseEvent));
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
 
 export const getSingleEvent = async (req, res) => {
-      try {
-          const { id } = req.params;
-
-          const event = await db.query.events.findFirst({
-              where: (events, { eq }) => eq(events.id, Number(id)),
-              with:{media : true} 
+    try {
+        const event = await db.query.events.findFirst({
+            where: eq(events.id, Number(req.params.id)),
+            with: { media: true }
         });
-
-        if (!event) {
-            return res.status(404).json({ message: "Event not found" });
-        }
-
-        res.status(200).json({ data: event });
+        if (!event) return res.status(404).json({ message: "Event not found" });
+        
+        res.status(200).json(parseEvent(event));
     } catch (error) {
-        res.status(500).json({ message: "Internal server error", error: error.message });
+        res.status(500).json({ message: "Error fetching event", error: error.message });
     }
-
 };
+
 export const getLatestEvents = async (req, res) => {
     try {
         const latest = await db.query.events.findMany({
+            orderBy: desc(events.date),
             limit: 3,
-            orderBy: (events, { desc }) => [desc(events.date)]
+            with: { media: true }
         });
-        res.status(200).json({ events: latest });
+        res.status(200).json(latest.map(parseEvent));
     } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-};
+        res.status(500).json({ message: "Error fetching latest events", error: error.message });
+    }};
 
 export const updateEvent = async (req, res) => {
     try {
         const { id } = req.params;
-        const {  title, location, description, event_date,event_time,lecturer_name,lecturer_title,session_axes, maxCapacity } = req.body;
-
-        const event = await db.query.events.findFirst({
-            where: (events, { eq }) => eq(events.id, Number(id))
-        });
-
-        if (!event) {
-            return res.status(404).json({ message: "Event not found" });
-        }
-
-        const updatedEvent = await db.update(events)
+        const { agenda, featured, ...data } = req.body;
+        
+        const updated = await db.update(events)
             .set({
-               title: title ?? event.title,
-        description: description ?? event.description,
-        location: location ?? event.location,
-        event_date: event_date ?? event.event_date,
-        event_time: event_time ?? event.event_time, 
-        lecturer_name: lecturer_name ?? event.lecturer_name, 
-        lecturer_title: lecturer_title ?? event.lecturer_title, 
-        session_axes: session_axes ?? event.session_axes, 
-        maxCapacity: maxCapacity ?? event.maxCapacity
+                ...data,
+                agenda: JSON.stringify(agenda),
+                featured: featured ? 1 : 0
             })
             .where(eq(events.id, Number(id)))
             .returning();
 
-        res.status(200).json({
-            message: "Event updated successfully",
-            data: updatedEvent[0]
-        });
-
+        if (!updated.length) return res.status(404).json({ message: "Event not found" });
+        
+        res.status(200).json(parseEvent(updated[0]));
     } catch (error) {
-        res.status(500).json({ message: "Internal server error", error: error.message });
+        res.status(500).json({ message: "Error updating event", error: error.message });
     }
 };
 
 export const deleteEvent = async (req, res) => {
-     try {
-        const { id } = req.params;
-
-        const event = await db.query.events.findFirst({
-            where: (events, { eq }) => eq(events.id, Number(id))
-        });
-
-        if (!event) {
-            return res.status(404).json({ message: "Event not found" });
-        }
-
-        if (req.user.role !== "admin") {
-            return res.status(403).json({ message: "Not authorized to delete this event" });
-        }
-
-        await db.delete(events).where(eq(events.id, Number(id)));
-
+    try {
+        await db.delete(events).where(eq(events.id, Number(req.params.id)));
         res.status(200).json({ message: "Event deleted successfully" });
-
-    } catch (error) {
-        res.status(500).json({ message: "Internal server error", error: error.message });
+        } catch (error) {
+        res.status(500).json({ message: "Error deleting event", error: error.message });
     }
-};
-
+;}
 export const getRealStats = async (req, res) => {
     try {
-        const eventsResult = await db.select({ count: sql`count(*)` }).from(events);
-        const beneficiariesResult = await db.select({ count: sql`count(*)` }).from(registrations);
-        const activeMembersCount = await db.select({ count: sql`count(*)` }).from(users);
+       
+        const [eventsCount, registrationsCount, usersCount] = await Promise.all([
+            db.select({ count: sql`count(*) `}).from(events),
+            db.select({ count: sql`count(*)` }).from(registrations),
+            db.select({ count: sql`count(*)` }).from(users)
+        ]);
 
         res.status(200).json({
             success: true,
             data: {
-                totalEvents: eventsResult[0].count,
-                totalBeneficiaries: beneficiariesResult[0].count,
-                activeMembers : activeMembersCount[0].count,
-
+                totalEvents: eventsCount[0].count,
+                totalBeneficiaries: registrationsCount[0].count, 
+                activeMembers: usersCount[0].count,
                 volunteerHours: 640
-            
-            }
+}
         });
     } catch (error) {
-        res.status(500).json({ message: "خطأ في حساب الإحصائيات", error: error.message });
+        console.error("Error fetching stats:", error);
+        res.status(500).json({ message: "حدث خطأ أثناء جلب الإحصائيات", error: error.message });
     }
 };
