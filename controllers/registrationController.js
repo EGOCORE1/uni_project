@@ -22,6 +22,10 @@ export const registerToEvent = async (req, res) => {
         if(!event){
             return res.status(404).json({message:"الفعالية غير موجودة"})
         }    
+        const today = new Date().toISOString().split('T')[0];
+        if (event.date < today){          
+              return res.status(400).json({ message: "عذراً، الفعالية منتهية ولا يمكن التسجيل" });
+}
        if (event.current_attendees >= event.attendees) {
             return res.status(400).json({ message: "عذراً، الفعالية ممتلئة ولا يمكن التسجيل" });
         }
@@ -73,17 +77,14 @@ export const cancelRegistration = async (req, res) => {
             return res.status(404).json({ message: "لم يتم العثور على حجز لإلغائه" });
         }
 await db.transaction(async (tx) => {
-            // حذف سجل التسجيل
             await tx.delete(registrations).where(
                 and(eq(registrations.userId, userId), eq(registrations.eventId, targetEventId))
             );
 
-            // جلب الفعالية لتحديث العداد
             const event = await tx.query.events.findFirst({
                 where: eq(events.id, targetEventId)
             });
 
-            // تحديث العداد (نقصان بمقدار 1)
             if (event && event.current_attendees > 0) {
                 await tx.update(events)
                     .set({ current_attendees: event.current_attendees - 1 })
@@ -102,8 +103,10 @@ export const checkRegistrationStatus = async (req, res) => {
         const targetEventId = Number(event_id);
         const event = await db.query.events.findFirst({
             where : eq(events.id , targetEventId)
+         
         })
-
+        const today = new Date().toISOString().split('T')[0];
+        const isExpired = event.date < today ;
 
     const registration = await db.query.registrations.findFirst({
             where: and(eq(registrations.userId, userId), eq(registrations.eventId, Number(event_id)))
@@ -114,7 +117,8 @@ export const checkRegistrationStatus = async (req, res) => {
 
         res.status(200).json({ isRegistered: !!registration,
             isFull : event.current_attendees >= event.attendees,
-            remainingSeats : event.attendees - event.current_attendees
+            remainingSeats : event.attendees - event.current_attendees,
+            isExpired : isExpired
          });
     } catch (error) {
         res.status(500).json({ message: "خطأ في التحقق من الحالة", error: error.message });
