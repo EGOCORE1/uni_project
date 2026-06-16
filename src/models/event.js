@@ -9,6 +9,7 @@ export const events = sqliteTable('events', {
   description: text('description'),
   date: text('date'), 
   time: text('time'), 
+  duration: text('duration'),
   attendees: integer('attendees'),          
   current_attendees: integer('current_attendees').default(0), 
   status: text('status').default('upcoming'),
