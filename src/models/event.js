@@ -1,6 +1,5 @@
 import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
 import { relations, sql } from 'drizzle-orm'; 
-import { eventMedia } from './eventMedia';
 export const events = sqliteTable('events', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   title: text('title').notNull(),
@@ -18,6 +17,3 @@ export const events = sqliteTable('events', {
   status: text('status').default('upcoming'),
  organizerId: integer('organizer_id')
 });
-export const eventsRelations = relations(events, ({ many }) => ({
-  media: many(eventMedia),
-}));
