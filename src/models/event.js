@@ -3,6 +3,8 @@ import { relations, sql } from 'drizzle-orm';
 export const events = sqliteTable('events', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   title: text('title').notNull(),
+  featured : integer('featured').default(0),
+  agenda : text('agenda'),
   speaker: text('speaker'), 
   speakerTitle: text('speakerTitle'), 
   location: text('location'),
