@@ -9,7 +9,7 @@ const parseEvent = (event) => {
     
     // التأكد من أن event.media موجودة ومصفوفة
     const mediaList = event.media || []; 
-    
+    console.log("m",event.id,":", JSON.stringify(mediaList , null,2))
     return {
         ...event,
         event_id: event.id,

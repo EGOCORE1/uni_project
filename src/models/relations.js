@@ -8,7 +8,7 @@ export const eventsRelations = relations(events, ({ many }) => ({
 
 export const eventMediaRelations = relations(eventMedia, ({ one }) => ({
     event: one(events, {
-        fields: [eventMedia.event_Id],
+        fields: [eventMedia.event_id],
         references: [events.id],
     }),
 }));
