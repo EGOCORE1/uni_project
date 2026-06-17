@@ -3,14 +3,22 @@ import { events } from '../src/models/event.js';
 import { registrations } from '../src/models/registration.js';
 import { users } from '../src/models/user.js';
 import { eq, desc, sql } from 'drizzle-orm';
-
-const parseEvent = (event) => ({
-    ...event,
-    event_id: event.id,
-    agenda: event.agenda ? JSON.parse(event.agenda) : [],
-    featured: event.featured === 1,
-    media: event.media || []
-});
+const parseEvent = (event) => {
+    // إذا كان الـ event نفسه غير معرف، أرجعي كائناً فارغاً لتجنب الانهيار
+    if (!event) return {}; 
+    
+    // التأكد من أن event.media موجودة ومصفوفة
+    const mediaList = event.media || []; 
+    
+    return {
+        ...event,
+        event_id: event.id,
+        agenda: event.agenda ? JSON.parse(event.agenda) : [],
+        featured: event.featured === 1,
+        img: mediaList.find(m => m.mediaType === "event_poster")?.mediaUrl || null,
+        speakerImg: mediaList.find(m => m.mediaType === "speaker_image")?.mediaUrl || null,
+    };
+};
 
 export const createEvent = async (req, res) => {
     try {
@@ -31,6 +39,8 @@ export const getActiveEvents = async (req, res) => {
     try {
         const active = await db.query.events.findMany({
             where: (events, { gt }) => gt(events.date, new Date().toISOString().split('T')[0]),
+            with : {media : true}
+
         });
         res.status(200).json(active.map(parseEvent));
     } catch (error) {
@@ -42,6 +52,7 @@ export const getArchiveEvents = async (req, res) => {
     try {
         const archive = await db.query.events.findMany({
             where: (events, { lte }) => lte(events.date, new Date().toISOString().split('T')[0]),
+            with : {media : true}
         });
         res.status(200).json(archive.map(parseEvent));
     } catch (error) {
