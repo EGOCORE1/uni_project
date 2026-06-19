@@ -4,12 +4,6 @@ import { registrations } from '../src/models/registration.js';
 import { users } from '../src/models/user.js';
 import { eq, desc, sql } from 'drizzle-orm';
 const parseEvent = (event) => {
-    // إذا كان الـ event نفسه غير معرف، أرجعي كائناً فارغاً لتجنب الانهيار
-    if (!event) return {}; 
-    
-    // التأكد من أن event.media موجودة ومصفوفة
-    const mediaList = event.media || []; 
-    console.log("m",event.id,":", JSON.stringify(mediaList , null,2))
     return {
         ...event,
         event_id: event.id,
