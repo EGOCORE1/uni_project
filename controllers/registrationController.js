@@ -6,6 +6,7 @@ import { and, eq } from "drizzle-orm";
 export const registerToEvent = async (req, res) => {
     try {
         const { event_id, full_name, email, phone_number } = req.body;
+    
 
         if (!req.user || !req.user.id) {
             return res.status(401).json({ message: "غير مصرح لك، يرجى تسجيل الدخول أولاً" });
@@ -16,6 +17,7 @@ export const registerToEvent = async (req, res) => {
         }
 
         const userId = req.user.id;
+        
         const targetEventId = Number(event_id);
         const event = await db.query.events.findFirst({
             where : eq(events.id , targetEventId)});
@@ -49,7 +51,7 @@ export const registerToEvent = async (req, res) => {
 
             
             await tx.update(events)
-                .set({ current_attendees: (event.current_attendees || 0) + 1 })
+                .set({ current_attendees: Number(event.current_attendees || 0) + 1 })
                 .where(eq(events.id, targetEventId));
         });
 

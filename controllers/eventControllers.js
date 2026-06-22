@@ -9,8 +9,8 @@ const parseEvent = (event) => {
         event_id: event.id,
         agenda: event.agenda ? JSON.parse(event.agenda) : [],
         featured: event.featured === 1,
-        img: mediaList.find(m => m.mediaType === "event_poster")?.mediaUrl || null,
-        speakerImg: mediaList.find(m => m.mediaType === "speaker_image")?.mediaUrl || null,
+        img: event.media.find(m => m.mediaType === "event_poster")?.mediaUrl || null,
+        speakerImg: event.media.find(m => m.mediaType === "speaker_image")?.mediaUrl || null,
     };
 };
 

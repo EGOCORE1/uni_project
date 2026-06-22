@@ -6,12 +6,10 @@ async function seed() {
     console.log("جاري البدء بعملية إدخال البيانات للفعاليات والأرشيف...");
 
     const allEvents = [
-        // الفعاليات القادمة
         { title: "متطلبات سوق العمل من المبرمجين", speaker: "أسامة دعبوس", date: "2026-10-27", featured: 1, agenda: JSON.stringify(["متطلبات السوق", "لغات البرمجة", "بناء الملف التقني"]), description: "استعراض لتغييرات سوق العمل التقني." ,time: "10:00", duration: "3 ساعات", location: "أونلاين / Zoom", attendees: 2, current_attendees: 0}, 
         { title: "Up and Running with Laravel", speaker: "محمد صالح حسن", date: "2026-10-27", featured: 0, agenda: JSON.stringify(["مقدمة إلى Laravel", "Routing & Controllers"]), description: "ورشة شاملة على إطار عمل Laravel.", time: "07:00", duration: "3 ساعات", location: "كلية الهندسة", attendees: 60, current_attendees: 0 },
         { title: "Technical Conversational Training", speaker: "أحمد الزعبي", date: "2026-11-15", featured: 0, agenda: JSON.stringify(["مفردات تقنية", "محادثات نموذجية"]), description: "تدريب على المحادثة التقنية." ,time: "11:00", duration: "2 ساعة", location: "قاعة D2", attendees: 80, current_attendees: 0},
         { title: "SKILL UP GA — رفع مستوى المهارات", speaker: "لجنة الهيئة الطلابية", date: "2026-11-20", featured: 0, agenda: JSON.stringify(["ورشة UX", "ورشة Python"]), description: "يوم تدريبي لرفع مستوى الطلاب.", time: "09:00", duration: "4 ساعات", location: "مدرج الكلية", attendees: 200, current_attendees: 0 },
-        // الأرشيف
         { title: "Up and Running with Laravel — النسخة الأولى", date: "2025-10-01", description: "أرشيف" },
         { title: "Technical Conversational Training #1", date: "2025-09-01", description: "أرشيف" },
         { title: "أفضل ممارسة سيبرانية", date: "2025-08-01", description: "أرشيف" },
@@ -22,7 +20,6 @@ async function seed() {
 
     const createdEvents = await db.insert(events).values(allEvents).returning();
 
-    // 2. ربط الصور لكل حدث (حسب ترتيب الإدخال)
     const mediaToInsert = [
         { event_id: createdEvents[0].id, mediaUrl: '/uploads/event11.jpg', mediaType: 'event_poster' },
         { event_id: createdEvents[0].id, mediaUrl: '/uploads/event1.jpg', mediaType: 'speaker_image' },
