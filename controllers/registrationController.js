@@ -63,14 +63,13 @@ export const registerToEvent = async (req, res) => {
 export const cancelRegistration = async (req, res) => {
     try {
         const { event_id } = req.body; 
+        const userId = req.user.id;
+        const targetEventId = Number(event_id);
+
 
         if (!req.user || !req.user.id) {
             return res.status(401).json({ message: "غير مصرح لك" });
         }
-
-        const userId = req.user.id;
-        const targetEventId = Number(event_id);
-
         const existingRegistration = await db.query.registrations.findFirst({
             where: and(eq(registrations.userId, userId), eq(registrations.eventId, targetEventId))
         });
