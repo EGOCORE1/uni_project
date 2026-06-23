@@ -13,6 +13,6 @@ router.get('/archive',authMiddleware,getArchiveEvents);
 router.get('/latest',authMiddleware,getLatestEvents);
 router.get('/:id',authMiddleware,getSingleEvent);
 router.post('/register',  authMiddleware,registerToEvent);
-router.post('/cancel', cancelRegistration);
+router.post('/cancel', authMiddleware,cancelRegistration);
 router.get('/status/:event_id',authMiddleware,checkRegistrationStatus);
 export default router;
