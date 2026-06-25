@@ -10,6 +10,5 @@ router.use(authMiddleware, roleMiddleware('admin'));
 router.post('/events', createEvent);
 router.put('/events/:id', updateEvent);
 router.delete('/events/:id', deleteEvent);
-router.get('/stats', getRealStats);
 
 export default router;
