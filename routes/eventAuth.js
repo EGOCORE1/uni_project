@@ -1,5 +1,5 @@
 import express from 'express';
-import { getActiveEvents, getArchiveEvents, getSingleEvent, getLatestEvents, getRealStats } from '../controllers/eventControllers.js';
+import { getActiveEvents, getArchiveEvents, getSingleEvent, getLatestEvents, getRealStats , getGoals} from '../controllers/eventControllers.js';
 import { 
     registerToEvent, 
     cancelRegistration, 
@@ -15,6 +15,7 @@ router.get('/:id',authMiddleware,getSingleEvent);
 router.post('/register',  authMiddleware,registerToEvent);
 router.post('/cancel', authMiddleware,cancelRegistration);
 router.get('/status/:event_id',authMiddleware,checkRegistrationStatus);
-router.get('/stats', authMiddleware, getRealStats);
+router.get('/stats', getRealStats);
+router.get('/goals',getGoals);
 
 export default router;

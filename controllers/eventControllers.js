@@ -3,6 +3,7 @@ import { events } from '../src/models/event.js';
 import { registrations } from '../src/models/registration.js';
 import { users } from '../src/models/user.js';
 import { eq, desc, sql } from 'drizzle-orm';
+import { goals }from '../src/models/goal.js'
 const parseEvent = (event) => {
     return {
         ...event,
@@ -128,6 +129,17 @@ export const getRealStats = async (req, res) => {
                 volunteerHours: 640
 }
         });
+    
+export const getGoals = async (req, res) => {
+    try {
+        const allGoals = await db.query.goals.findMany();
+        
+        res.status(200).json(allGoals);
+    } catch (error) {
+        res.status(500).json({ message: "خطأ في جلب الأهداف", error: error.message });
+    }
+};    
+        
     } catch (error) {
         console.error("Error fetching stats:", error);
         res.status(500).json({ message: "حدث خطأ أثناء جلب الإحصائيات", error: error.message });
