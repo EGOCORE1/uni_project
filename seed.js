@@ -5,6 +5,7 @@ import { goals } from './src/models/goal.js';
 
 
 async function seed() {
+    console.log("جاري البدء بعملية إدخال البيانات للاهداف...");
     const goalsData = [
     { 
         content: "تمثيل الطلاب أمام إدارة الكلية والعمل على حل المشكلات الأكاديمية والخدمية التي تواجههم خلال مسيرتهم الدراسية" 
@@ -16,7 +17,7 @@ async function seed() {
         content: "توفير المصادر التعليمية والبحثية، وتسهيل تبادل الخبرات بين الطلاب من مختلف السنوات الدراسية" 
     }
 ];
-    
+    await db.insert(goals).values(goalsData);
 
     console.log("جاري البدء بعملية إدخال البيانات للفعاليات والأرشيف...");
 
