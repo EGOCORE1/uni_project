@@ -1,8 +1,23 @@
 import { db } from './src/db.js';
 import { events } from './src/models/event.js';
 import { eventMedia } from './src/models/eventMedia.js';
+import { goals } from './src/models/goal.js';
+
 
 async function seed() {
+    const goalsData = [
+    { 
+        content: "تمثيل الطلاب أمام إدارة الكلية والعمل على حل المشكلات الأكاديمية والخدمية التي تواجههم خلال مسيرتهم الدراسية" 
+    },
+    { 
+        content: "خلق بيئة تفاعلية من خلال الأنشطة الترفيهية والاجتماعية التي تكسر روتين الدراسة وتنمي مهارات العمل الجماعي" 
+    },
+    { 
+        content: "توفير المصادر التعليمية والبحثية، وتسهيل تبادل الخبرات بين الطلاب من مختلف السنوات الدراسية" 
+    }
+];
+    
+
     console.log("جاري البدء بعملية إدخال البيانات للفعاليات والأرشيف...");
 
     const allEvents = [

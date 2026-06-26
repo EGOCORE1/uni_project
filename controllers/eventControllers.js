@@ -129,6 +129,12 @@ export const getRealStats = async (req, res) => {
                 volunteerHours: 640
 }
         });
+        
+    } catch (error) {
+        console.error("Error fetching stats:", error);
+        res.status(500).json({ message: "حدث خطأ أثناء جلب الإحصائيات", error: error.message });
+    }
+}
     
 export const getGoals = async (req, res) => {
     try {
@@ -139,9 +145,4 @@ export const getGoals = async (req, res) => {
         res.status(500).json({ message: "خطأ في جلب الأهداف", error: error.message });
     }
 };    
-        
-    } catch (error) {
-        console.error("Error fetching stats:", error);
-        res.status(500).json({ message: "حدث خطأ أثناء جلب الإحصائيات", error: error.message });
-    }
-};
+
