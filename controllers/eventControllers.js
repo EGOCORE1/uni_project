@@ -80,26 +80,34 @@ export const getLatestEvents = async (req, res) => {
     } catch (error) {
         res.status(500).json({ message: "Error fetching latest events", error: error.message });
     }};
-
 export const updateEvent = async (req, res) => {
     try {
         const { id } = req.params;
         const { agenda, featured, ...data } = req.body;
-        
-        const updated = await db.update(events)
-            .set({
-                ...data,
-                agenda: JSON.stringify(agenda),
-                featured: featured ? 1 : 0
-            })
-            .where(eq(events.id, Number(id)))
-            .returning();
 
-        if (!updated.length) return res.status(404).json({ message: "Event not found" });
-        
-        res.status(200).json(parseEvent(updated[0]));
+        const updatedEvent = await db.transaction(async (tx) => {
+            // 1. التحديث
+            await tx.update(events)
+                .set({
+                    ...data,
+                    agenda: agenda ? JSON.stringify(agenda) : undefined,
+                    featured: featured !== undefined ? (featured ? 1 : 0) : undefined
+                })
+                .where(eq(events.id, Number(id)));
+
+            // 2. جلب البيانات بعد التحديث
+            return await tx.query.events.findFirst({
+                where: eq(events.id, Number(id))
+            });
+        });
+
+        if (!updatedEvent) {
+            return res.status(404).json({ message: "الفعالية غير موجودة" });
+        }
+
+        res.status(200).json(updatedEvent);
     } catch (error) {
-        res.status(500).json({ message: "Error updating event", error: error.message });
+        res.status(500).json({ message: "خطأ في التحديث", error: error.message });
     }
 };
 

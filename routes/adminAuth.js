@@ -7,8 +7,8 @@ const router = express.Router();
 
 router.use(authMiddleware, roleMiddleware('admin'));
 
-router.post('/events', createEvent);
-router.put('/events/:id', updateEvent);
-router.delete('/events/:id', deleteEvent);
+router.post('/events', roleMiddleware('admin'),createEvent);
+router.put('/events/:id', roleMiddleware('admin'),updateEvent);
+router.delete('/events/:id', roleMiddleware('admin'),deleteEvent);
 
 export default router;
