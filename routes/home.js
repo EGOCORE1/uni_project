@@ -1,4 +1,5 @@
 import express from 'express';
+
 import { getRealStats, getGoals } from '../controllers/eventControllers.js';
 
 const router = express.Router();
