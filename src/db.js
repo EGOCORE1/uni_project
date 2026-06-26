@@ -5,6 +5,7 @@ import { events } from './models/event.js';
 import { registrations } from './models/registration.js';
 import { notifications } from './models/notification.js';
 import { eventMedia } from './models/eventMedia.js';
+import { AboutUs } from './models/aboutUs.js';
 import * as relationsSchema from './models/relations.js';
 
 const client = createClient({ url: 'file:sqlite.db' });
@@ -14,6 +15,7 @@ export const schema = {
     registrations, 
     notifications, 
     eventMedia, 
+    AboutUs ,
     ...relationsSchema 
 };
 
