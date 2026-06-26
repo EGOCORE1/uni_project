@@ -5,14 +5,15 @@ import { and, eq } from "drizzle-orm";
 
 export const registerToEvent = async (req, res) => {
     try {
-        const { event_id, full_name, email, phone_number } = req.body;
+        const { event_id, full_name,  phone_number , notes} = req.body;
+        const userEmail = req.user.email ;
     
 
         if (!req.user || !req.user.id) {
             return res.status(401).json({ message: "غير مصرح لك، يرجى تسجيل الدخول أولاً" });
         }
 
-        if (!event_id || !full_name || !email || !phone_number) {
+        if (!event_id || !full_name  || !phone_number ) {
             return res.status(400).json({ message: "الرجاء إدخال جميع الحقول المطلوبة" });
         }
 
@@ -45,7 +46,8 @@ export const registerToEvent = async (req, res) => {
                 eventId: targetEventId,
                 userId: userId,
                 full_name,
-                email,
+                email: userEmail,
+                notes,
                 phone_number,
             });
 

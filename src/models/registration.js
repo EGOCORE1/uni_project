@@ -14,6 +14,7 @@ export const registrations = sqliteTable('registrations', {
     full_name: text('full_name').notNull(),
     email: text('email').notNull(),
     phone_number: text('phone_number').notNull(),
+    notes : text("notes"),
     createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`) 
 });
 
