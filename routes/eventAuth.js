@@ -15,7 +15,5 @@ router.get('/:id',authMiddleware,getSingleEvent);
 router.post('/register',  authMiddleware,registerToEvent);
 router.post('/cancel', authMiddleware,cancelRegistration);
 router.get('/status/:event_id',authMiddleware,checkRegistrationStatus);
-router.get('/stats', getRealStats);
-router.get('/goals',getGoals);
 
 export default router;
