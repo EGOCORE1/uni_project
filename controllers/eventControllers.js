@@ -3,7 +3,8 @@ import { events } from '../src/models/event.js';
 import { registrations } from '../src/models/registration.js';
 import { users } from '../src/models/user.js';
 import { eq, desc, sql } from 'drizzle-orm';
-import { goals }from '../src/models/goal.js'
+import { goals }from '../src/models/goal.js';
+import { eventMedia } from '../src/models/eventMedia.js';
 const parseEvent = (event) => {
     return {
         ...event,
@@ -13,19 +14,33 @@ const parseEvent = (event) => {
         img: event.media.find(m => m.mediaType === "event_poster")?.mediaUrl || null,
         speakerImg: event.media.find(m => m.mediaType === "speaker_image")?.mediaUrl || null,
     };
-};
-
-export const createEvent = async (req, res) => {
+};export const createEvent = async (req, res) => {
     try {
         const { agenda, featured, ...data } = req.body;
-        const newEvent = await db.insert(events).values({
-            ...data,
-            agenda: JSON.stringify(agenda),
-            featured: featured ? 1 : 0,
-            organizerId: req.user.id
-        }).returning();
         
-        res.status(201).json(parseEvent(newEvent[0]));
+        const agendaParsed = typeof agenda === 'string' ? JSON.parse(agenda) : agenda;
+        const featuredValue = (featured === 'true' || featured === true || featured === 1) ? 1 : 0;
+
+        await db.insert(events).values({
+            ...data,
+            agenda: JSON.stringify(agendaParsed),
+            featured: featuredValue,
+        }).run(); 
+
+        const newEvent = await db.query.events.findFirst({
+            orderBy: (events, { desc }) => [desc(events.id)]
+        });
+        if (req.files && req.files.length > 0) {
+            for (const file of req.files) {
+                await db.insert(eventMedia).values({
+                    event_id: newEvent.id,
+                    mediaUrl: `uploads/${file.filename}`,
+                    mediaType: "image" 
+                }).run();
+            }
+        }
+        
+        res.status(201).json({ message: "تم إنشاء الفعالية مع صورها بنجاح" });
     } catch (error) {
         res.status(500).json({ message: "Error creating event", error: error.message });
     }

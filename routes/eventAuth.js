@@ -1,5 +1,5 @@
 import express from 'express';
-import { getActiveEvents, getArchiveEvents, getSingleEvent, getLatestEvents, getRealStats , getGoals} from '../controllers/eventControllers.js';
+import { getActiveEvents, getArchiveEvents, getSingleEvent, getLatestEvents} from '../controllers/eventControllers.js';
 import { 
     registerToEvent, 
     cancelRegistration, 
