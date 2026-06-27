@@ -16,16 +16,19 @@ const parseEvent = (event) => {
     };
 };export const createEvent = async (req, res) => {
     try {
-        const { agenda, featured, ...data } = req.body;
+        let { agenda, featured, id, ...data } = req.body;
         
+        delete data.id;
+
         const agendaParsed = typeof agenda === 'string' ? JSON.parse(agenda) : agenda;
-        const featuredValue = (featured === 'true' || featured === true || featured === 1) ? 1 : 0;
+        const featuredValue = (featured === 'true'  ||featured === true || featured === 1) ? 1 : 0;
 
         await db.insert(events).values({
             ...data,
             agenda: JSON.stringify(agendaParsed),
             featured: featuredValue,
         }).run(); 
+
 
         const newEvent = await db.query.events.findFirst({
             orderBy: (events, { desc }) => [desc(events.id)]

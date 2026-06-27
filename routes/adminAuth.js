@@ -9,7 +9,7 @@ const router = express.Router();
 router.use(authMiddleware, roleMiddleware('admin'));
 
 router.post('/events', roleMiddleware('admin'),upload.array('image'),createEvent);
-router.put('/events/:id', roleMiddleware('admin'),updateEvent);
+router.put('/events/:id', roleMiddleware('admin'),upload.array('images',2),updateEvent);
 router.delete('/events/:id', roleMiddleware('admin'),deleteEvent);
 
 export default router;
