@@ -8,7 +8,7 @@ const router = express.Router();
 
 router.use(authMiddleware, roleMiddleware('admin'));
 
-router.post('/events', roleMiddleware('admin'),upload.array('image'),createEvent);
+router.post('/events', roleMiddleware('admin'),upload.array('images',2),createEvent);
 router.put('/events/:id', roleMiddleware('admin'),upload.array('images',2),updateEvent);
 router.delete('/events/:id', roleMiddleware('admin'),deleteEvent);
 

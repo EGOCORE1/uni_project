@@ -5,16 +5,26 @@ import { users } from '../src/models/user.js';
 import { eq, desc, sql } from 'drizzle-orm';
 import { goals }from '../src/models/goal.js';
 import { eventMedia } from '../src/models/eventMedia.js';
+import path from 'path';
+import fs from 'fs';
 const parseEvent = (event) => {
+    const mediaList = event.media || [];
+    
+    const poster = mediaList.find(m => m.mediaType === "image")?.mediaUrl;
+    
+    const speaker = mediaList.find(m => m.mediaType === "speaker_image")?.mediaUrl;
+    
     return {
         ...event,
         event_id: event.id,
         agenda: event.agenda ? JSON.parse(event.agenda) : [],
         featured: event.featured === 1,
-        img: event.media.find(m => m.mediaType === "event_poster")?.mediaUrl || null,
-        speakerImg: event.media.find(m => m.mediaType === "speaker_image")?.mediaUrl || null,
+        img: poster ? `http://localhost:4000/${poster} `: null,
+        speakerImg: speaker ? `http://localhost:4000/${speaker}` : null,
     };
-};export const createEvent = async (req, res) => {
+};
+
+export const createEvent = async (req, res) => {
     try {
         let { agenda, featured, id, ...data } = req.body;
         
@@ -137,7 +147,7 @@ export const getLatestEvents = async (req, res) => {
 
                 for (const file of req.files) {
                     await tx.insert(eventMedia).values({
-                        eventId: Number(id),
+                        event_id: Number(id),
                         mediaUrl:` uploads/${file.filename}`,
                         mediaType: "image"
                     });
