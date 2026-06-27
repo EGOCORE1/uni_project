@@ -83,19 +83,32 @@ export const getLatestEvents = async (req, res) => {
 export const updateEvent = async (req, res) => {
     try {
         const { id } = req.params;
-        const { agenda, featured, ...data } = req.body;
+        
+        const body = req.body; 
+        let agendaData = body.agenda;
+        if (typeof agendaData === 'string') {
+            try {
+                agendaData = JSON.parse(agendaData);
+            } catch (e) {
+            }
+        }
+
+        let featuredValue = body.featured;
+        if (featuredValue !== undefined) {
+            featuredValue = (featuredValue === 'true' || featuredValue === true || featuredValue === 1) ? 1 : 0;
+        }
+
+        const { agenda, featured, ...data } = body;
 
         const updatedEvent = await db.transaction(async (tx) => {
-            // 1. التحديث
             await tx.update(events)
                 .set({
                     ...data,
-                    agenda: agenda ? JSON.stringify(agenda) : undefined,
-                    featured: featured !== undefined ? (featured ? 1 : 0) : undefined
+                    agenda: agendaData ? JSON.stringify(agendaData) : undefined,
+                    featured: featuredValue !== undefined ? featuredValue : undefined
                 })
                 .where(eq(events.id, Number(id)));
 
-            // 2. جلب البيانات بعد التحديث
             return await tx.query.events.findFirst({
                 where: eq(events.id, Number(id))
             });
