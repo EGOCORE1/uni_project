@@ -95,22 +95,18 @@ export const getLatestEvents = async (req, res) => {
     } catch (error) {
         res.status(500).json({ message: "Error fetching latest events", error: error.message });
     }};
-export const updateEvent = async (req, res) => {
+    export const updateEvent = async (req, res) => {
     try {
         const { id } = req.params;
-        
         const body = req.body; 
-        let agendaData = body.agenda;
+                let agendaData = body.agenda;
         if (typeof agendaData === 'string') {
-            try {
-                agendaData = JSON.parse(agendaData);
-            } catch (e) {
-            }
+            try { agendaData = JSON.parse(agendaData); } catch (e) {}
         }
 
         let featuredValue = body.featured;
         if (featuredValue !== undefined) {
-            featuredValue = (featuredValue === 'true' || featuredValue === true || featuredValue === 1) ? 1 : 0;
+            featuredValue = (featuredValue === 'true'  ||featuredValue === true||  featuredValue === 1) ? 1 : 0;
         }
 
         const { agenda, featured, ...data } = body;
@@ -124,8 +120,30 @@ export const updateEvent = async (req, res) => {
                 })
                 .where(eq(events.id, Number(id)));
 
+            if (req.files && req.files.length > 0) {
+                const oldMedia = await tx.query.eventMedia.findMany({
+                    where: eq(eventMedia.eventId, Number(id))
+                });
+                
+                for (const item of oldMedia) {
+                    const filePath = path.join(process.cwd(), item.mediaUrl);
+                    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+                }
+
+                await tx.delete(eventMedia).where(eq(eventMedia.eventId, Number(id)));
+
+                for (const file of req.files) {
+                    await tx.insert(eventMedia).values({
+                        eventId: Number(id),
+                        mediaUrl:` uploads/${file.filename}`,
+                        mediaType: "image"
+                    });
+                }
+            }
+
             return await tx.query.events.findFirst({
-                where: eq(events.id, Number(id))
+                where: eq(events.id, Number(id)),
+                with: { media: true } 
             });
         });
 
