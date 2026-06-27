@@ -1,6 +1,6 @@
-import { mysqlTable, serial, text } from "drizzle-orm/mysql-core";
-
-export const goals = mysqlTable("goals", {
-    id: serial("id").primaryKey(),
-    content: text("content").notNull(),
+import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+import { relations, sql } from 'drizzle-orm'; 
+export const goals = sqliteTable("goals", {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  content: text("content").notNull(),
 });
