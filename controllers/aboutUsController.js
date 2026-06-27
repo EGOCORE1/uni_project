@@ -3,7 +3,7 @@ import { AboutUs } from "../src/models/aboutUs.js";
 import { and, eq } from "drizzle-orm";
 
 // StudentBody : طلاب الهيئة 
-const creatStudentBody = async (req , res ) => {
+export const creatStudentBody = async (req , res) => {
     try {
         const {name , description , position} = req.body;
         const newStudent = await db.insert(AboutUs).values({
@@ -13,20 +13,22 @@ const creatStudentBody = async (req , res ) => {
         }).returning();
         res.status(201).json({data : newStudent[0]})
     } catch (error) {
+        console.log(error);
         res.status(500).json({error : `failed to Post Student`})
     }
 }
 
-const getStudentBody = async(req , res) => {
+export const getStudentBody = async (req , res) => {
     try {
         const allStudentBody = await db.select().from(AboutUs)
     res.json({data : allStudentBody})
     } catch (error) {
-    res.status(500).json({error : 'failed to fetch students'})
+        console.error(error);
+        res.status(500).json({error : 'failed to fetch students'})
     }
 };
 
-const updateStudentBody = async (req , res ) => {
+export const updateStudentBody = async (req , res ) => {
     try {
         const {name , description , position } = req.body;
         const id = Number(req.parms.id);
