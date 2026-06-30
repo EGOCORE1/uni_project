@@ -10,9 +10,9 @@ import fs from 'fs';
 const parseEvent = (event) => {
     const mediaList = event.media || [];
     
-    const poster = mediaList.find(m => m.mediaType === "image")?.mediaUrl;
+    const poster = mediaList.find(m => m.mediaType === "image"|| m.mediaType === "event_poster")?.mediaUrl;
     
-    const speaker = mediaList.find(m => m.mediaType === "speaker_image")?.mediaUrl;
+    const speaker = mediaList.find(m => m.mediaType === "speaker_image" || m.mediaType === "speaker_image")?.mediaUrl;
     
     return {
         ...event,
@@ -32,9 +32,11 @@ export const createEvent = async (req, res) => {
 
         const agendaParsed = typeof agenda === 'string' ? JSON.parse(agenda) : agenda;
         const featuredValue = (featured === 'true'  ||featured === true || featured === 1) ? 1 : 0;
+        const organizerId = req.body ;
 
         await db.insert(events).values({
             ...data,
+            organizerId : organizerId,
             agenda: JSON.stringify(agendaParsed),
             featured: featuredValue,
         }).run(); 
