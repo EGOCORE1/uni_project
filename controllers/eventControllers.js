@@ -13,13 +13,10 @@ const parseEvent = (event) => {
     
     const cleanUrl = (url) => {
         if (!url) return null;
-        // إزالة المسافات وتصحيح السلاش المزدوج
         const clean = url.replace(/([^:]\/)\/+/g, "$1").trim();
-        // تصحيح: استخدام clean بدلاً من cleanPath غير المعرفة
         return clean.startsWith('http') ? clean :` http://localhost:4000/${clean.replace(/^\/+/, '')}`;
     };
 
-    // تصحيح: إضافة || بين شروط البحث
     const poster = mediaList.find(m => m.mediaType === "image" || m.mediaType === "event_poster")?.mediaUrl;
     const speaker = mediaList.find(m => m.mediaType === "speaker_image")?.mediaUrl;
     
@@ -60,7 +57,7 @@ export const createEvent = async (req, res) => {
             for (const file of req.files) {
                 await db.insert(eventMedia).values({
                     event_id: newEvent.id,
-                    mediaUrl: `uploads/${file.filename}`,
+                    mediaUrl: `/uploads/${file.filename}`,
                     mediaType: "image" 
                 }).run();
             }
@@ -148,7 +145,7 @@ export const getLatestEvents = async (req, res) => {
 
             if (req.files && req.files.length > 0) {
                 const oldMedia = await tx.query.eventMedia.findMany({
-                    where: eq(eventMedia.eventId, Number(id))
+                    where: eq(eventMedia.event_id, Number(id))
                 });
                 
                 for (const item of oldMedia) {
