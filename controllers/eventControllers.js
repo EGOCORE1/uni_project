@@ -8,21 +8,32 @@ import { eventMedia } from '../src/models/eventMedia.js';
 import path from 'path';
 import fs from 'fs';
 const parseEvent = (event) => {
-    const mediaList = event.media || [];
+   
+ const mediaList = event.media || [];
     
-    const poster = mediaList.find(m => m.mediaType === "image"|| m.mediaType === "event_poster")?.mediaUrl;
-    
-    const speaker = mediaList.find(m => m.mediaType === "speaker_image" || m.mediaType === "speaker_image")?.mediaUrl;
+    const cleanUrl = (url) => {
+        if (!url) return null;
+        // إزالة المسافات وتصحيح السلاش المزدوج
+        const clean = url.replace(/([^:]\/)\/+/g, "$1").trim();
+        // تصحيح: استخدام clean بدلاً من cleanPath غير المعرفة
+        return clean.startsWith('http') ? clean :` http://localhost:4000/${clean.replace(/^\/+/, '')}`;
+    };
+
+    // تصحيح: إضافة || بين شروط البحث
+    const poster = mediaList.find(m => m.mediaType === "image" || m.mediaType === "event_poster")?.mediaUrl;
+    const speaker = mediaList.find(m => m.mediaType === "speaker_image")?.mediaUrl;
     
     return {
         ...event,
         event_id: event.id,
         agenda: event.agenda ? JSON.parse(event.agenda) : [],
         featured: event.featured === 1,
-        img: poster ? `http://localhost:4000/${poster} `: null,
-        speakerImg: speaker ? `http://localhost:4000/${speaker}` : null,
+        img: poster ? cleanUrl(poster) : null,
+        speakerImg: speaker ? cleanUrl(speaker) : null,
     };
 };
+
+
 
 export const createEvent = async (req, res) => {
     try {
@@ -150,7 +161,7 @@ export const getLatestEvents = async (req, res) => {
                 for (const file of req.files) {
                     await tx.insert(eventMedia).values({
                         event_id: Number(id),
-                        mediaUrl:` uploads/${file.filename}`,
+                        mediaUrl:` /uploads/${file.filename}`,
                         mediaType: "image"
                     });
                 }
