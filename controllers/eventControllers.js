@@ -52,8 +52,8 @@ export const createEvent = async (req, res) => {
     const featuredValue =
       featured === "true" ||
       featured === true ||
-      featured === 1 ||
-      featured === "1"
+      featured === "1" ||
+      featured === 1
         ? 1
         : 0;
     const result = await db
@@ -173,8 +173,8 @@ export const updateEvent = async (req, res) => {
 
     if (featuredValue !== undefined) {
       featuredValue =
-        featuredValue === "true" 
-        featuredValue === true 
+        featuredValue === "true" ||
+        featuredValue === true ||
         featuredValue === 1 ||
         featuredValue === "1"
           ? 1
