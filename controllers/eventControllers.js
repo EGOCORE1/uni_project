@@ -52,8 +52,8 @@ export const createEvent = async (req, res) => {
     const featuredValue =
       featured === "true" ||
       featured === true ||
-      featured === "1" ||
-      featured === 1
+      featured === 1 ||
+      featured === "1"
         ? 1
         : 0;
     const result = await db
