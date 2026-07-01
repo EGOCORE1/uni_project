@@ -8,8 +8,14 @@ const router = express.Router();
 
 router.use(authMiddleware, roleMiddleware('admin'));
 
-router.post('/events', roleMiddleware('admin'),upload.array('images',2),createEvent);
-router.put('/events/:id', roleMiddleware('admin'),upload.array('images',2),updateEvent);
+router.post('/events', roleMiddleware('admin'),upload.fields([
+  { name: "img", maxCount: 1 },
+  { name: "speakerImg", maxCount: 1 },
+]),createEvent);
+router.put('/events/:id', roleMiddleware('admin'),upload.fields([
+  { name: "img", maxCount: 1 },
+  { name: "speakerImg", maxCount: 1 },
+]),updateEvent);
 router.delete('/events/:id', roleMiddleware('admin'),deleteEvent);
 
 export default router;

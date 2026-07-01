@@ -29,25 +29,21 @@ const parseEvent = (event) => {
         speakerImg: speaker ? cleanUrl(speaker) : null,
     };
 };
-
 export const createEvent = async (req, res) => {
   try {
     let { agenda, featured, id, ...data } = req.body;
 
-    // تجاهل أي id قادم من الفرونت
     delete data.id;
 
-    // تحويل agenda إلى JSON إذا كانت نصًا
-    let agendaParsed = agenda;
+    let agendaParsed = [];
     if (typeof agenda === "string") {
       try {
         agendaParsed = JSON.parse(agenda);
-      } catch (err) {
+      } catch {
         agendaParsed = [];
       }
     }
 
-    // تحويل featured إلى 0 أو 1
     const featuredValue =
       featured === "true" ||
       featured === true ||
@@ -56,48 +52,48 @@ export const createEvent = async (req, res) => {
         ? 1
         : 0;
 
-    // إنشاء الفعالية
-    const result = await db
-      .insert(events)
-      .values({
-        ...data,
-        organizerId: data.organizerId ? Number(data.organizerId) : null,
-        agenda: JSON.stringify(agendaParsed),
-        featured: featuredValue,
-      })
-      .run();
+    await db.insert(events).values({
+      ...data,
+      organizerId: data.organizerId ? Number(data.organizerId) : null,
+      agenda: JSON.stringify(agendaParsed),
+      featured: featuredValue,
+    });
 
-    // جلب آخر فعالية تمت إضافتها
     const newEvent = await db.query.events.findFirst({
       orderBy: (events, { desc }) => [desc(events.id)],
     });
 
-    if (!newEvent) {
-      return res.status(500).json({
-        message: "فشل إنشاء الفعالية",
+    const poster = req.files?.img?.[0];
+    const speaker = req.files?.speakerImg?.[0];
+
+    if (poster) {
+      await db.insert(eventMedia).values({
+        event_id: newEvent.id,
+        mediaUrl:` /uploads/${poster.filename}`,
+        mediaType: "event_poster",
       });
     }
 
-    // حفظ الصور إن وجدت
-    if (req.files && req.files.length > 0) {
-      for (const file of req.files) {
-        await db.insert(eventMedia).values({
-          event_id: newEvent.id,
-          mediaUrl:`/uploads/${file.filename}`,
-          mediaType: "image",
-        });
-      }
+    if (speaker) {
+      await db.insert(eventMedia).values({
+        event_id: newEvent.id,
+        mediaUrl: `/uploads/${speaker.filename}`,
+        mediaType: "speaker_image",
+      });
     }
 
-    return res.status(201).json({
-      message: "تم إنشاء الفعالية بنجاح",
-      event: newEvent,
+    const eventWithMedia = await db.query.events.findFirst({
+      where: eq(events.id, newEvent.id),
+      with: {
+        media: true,
+      },
     });
 
+    res.status(201).json(parseEvent(eventWithMedia));
   } catch (error) {
     console.error(error);
 
-    return res.status(500).json({
+    res.status(500).json({
       message: "خطأ أثناء إنشاء الفعالية",
       error: error.message,
     });
@@ -153,94 +149,118 @@ export const getLatestEvents = async (req, res) => {
     } catch (error) {
         res.status(500).json({ message: "Error fetching latest events", error: error.message });
     }};
-   
-
-export const updateEvent = async (req, res) => {
+   export const updateEvent = async (req, res) => {
   try {
     const { id } = req.params;
-    const body = req.body;
 
-    let agendaData = body.agenda;
+    let agendaData = req.body.agenda;
 
     if (typeof agendaData === "string") {
       try {
         agendaData = JSON.parse(agendaData);
-      } catch (err) {
+      } catch {
+        agendaData = [];
       }
     }
 
-    let featuredValue = body.featured;
+    const featuredValue =
+      req.body.featured === "true" ||
+      req.body.featured === true ||
+      req.body.featured === "1" ||
+      req.body.featured === 1
+        ? 1
+        : 0;
 
-    if (featuredValue !== undefined) {
-      featuredValue =
-        featuredValue === "true" ||
-        featuredValue === true ||
-        featuredValue === 1 ||
-        featuredValue === "1"
-          ? 1
-          : 0;
-    }
+    const { agenda, featured, ...data } = req.body;
 
-    const { agenda, featured, ...data } = body;
-
-    const updatedEvent = await db.transaction(async (tx) => {
+    await db.transaction(async (tx) => {
       await tx
         .update(events)
         .set({
           ...data,
-          agenda: agendaData ? JSON.stringify(agendaData) : null,
+          agenda: JSON.stringify(agendaData),
           featured: featuredValue,
         })
         .where(eq(events.id, Number(id)));
 
-      if (req.files && req.files.length > 0) {
-        const oldMedia = await tx.query.eventMedia.findMany({
-          where: eq(eventMedia.event_id, Number(id)),
+      const poster = req.files?.img?.[0];
+      const speaker = req.files?.speakerImg?.[0];
+
+      if (poster) {
+        const oldPoster = await tx.query.eventMedia.findFirst({
+          where: (media, { and, eq }) =>
+            and(
+              eq(media.event_id, Number(id)),
+              eq(media.mediaType, "event_poster")
+            ),
         });
 
-        for (const item of oldMedia) {
+        if (oldPoster) {
           const filePath = path.join(
             process.cwd(),
-            item.mediaUrl.replace(/^\/+/, "")
+            oldPoster.mediaUrl.replace(/^\/+/, "")
           );
 
           if (fs.existsSync(filePath)) {
             fs.unlinkSync(filePath);
           }
+
+          await tx
+            .delete(eventMedia)
+            .where(eq(eventMedia.id, oldPoster.id));
         }
 
-        await tx
-          .delete(eventMedia)
-          .where(eq(eventMedia.event_id, Number(id)));
-
-        for (const file of req.files) {
-          await tx.insert(eventMedia).values({
-            event_id: Number(id),
-            mediaUrl:` /uploads/${file.filename}`,
-            mediaType: "image",
-          });
-        }
+        await tx.insert(eventMedia).values({
+          event_id: Number(id),
+          mediaUrl: `/uploads/${poster.filename}`,
+          mediaType: "event_poster",
+        });
       }
 
-      return await tx.query.events.findFirst({
-        where: eq(events.id, Number(id)),
-        with: {
-          media: true,
-        },
-      });
+      if (speaker) {
+        const oldSpeaker = await tx.query.eventMedia.findFirst({
+          where: (media, { and, eq }) =>
+            and(
+              eq(media.event_id, Number(id)),
+              eq(media.mediaType, "speaker_image")
+            ),
+        });
+
+        if (oldSpeaker) {
+          const filePath = path.join(
+            process.cwd(),
+            oldSpeaker.mediaUrl.replace(/^\/+/, "")
+          );
+
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+          }
+
+          await tx
+            .delete(eventMedia)
+            .where(eq(eventMedia.id, oldSpeaker.id));
+        }
+
+        await tx.insert(eventMedia).values({
+          event_id: Number(id),
+          mediaUrl: `/uploads/${speaker.filename}`,
+          mediaType: "speaker_image",
+        });
+      }
     });
 
-    if (!updatedEvent) {
-      return res.status(404).json({
-        message: "الفعالية غير موجودة",
-      });
-    }
+    const updatedEvent = await db.query.events.findFirst({
+      where: eq(events.id, Number(id)),
+      with: {
+        media: true,
+      },
+    });
 
-    return res.status(200).json(updatedEvent);
+    res.status(200).json(parseEvent(updatedEvent));
   } catch (error) {
-    console.error("Update Event Error:", error);
+    console.error(error);
 
-    return res.status(500).json({
+    res.status(500).json({
       message: "خطأ في تعديل الفعالية",
       error: error.message,
     });
