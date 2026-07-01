@@ -5,7 +5,6 @@ import userRoutes from './routes/userAuth.js';
 import homeRoutes from './routes/home.js'
 import eventRoutes from './routes/eventAuth.js';
 import adminRoutes from './routes/adminAuth.js';
-import studentBodyRoutes from './routes/StudentBody.js'
 import { authMiddleware } from './middlewares/authmiddlewares.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -23,7 +22,6 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/users', userRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/home', homeRoutes);
-app.use('/api/student' , studentBodyRoutes)
 app.use('/api/admin', authMiddleware, adminRoutes);
 app.get('/', (req, res) => {
     res.send('Server is running perfectly! 🚀');

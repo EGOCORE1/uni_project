@@ -38,11 +38,7 @@ const parseEvent = (event) => {
 export const createEvent = async (req, res) => {
   try {
     let { agenda, featured, id, ...data } = req.body;
-
-    // تجاهل أي id قادم من الفرونت
     delete data.id;
-
-    // تحويل agenda إلى JSON إذا كانت نصًا
     let agendaParsed = agenda;
     if (typeof agenda === "string") {
       try {
@@ -52,16 +48,14 @@ export const createEvent = async (req, res) => {
       }
     }
 
-    // تحويل featured إلى 0 أو 1
+    
     const featuredValue =
-      featured === "true" 
-      featured === true 
-      featured === "1" 
+      featured === "true" ||
+      featured === true ||
+      featured === "1" ||
       featured === 1
         ? 1
         : 0;
-
-    // إنشاء الفعالية
     const result = await db
       .insert(events)
       .values({
@@ -72,7 +66,6 @@ export const createEvent = async (req, res) => {
       })
       .run();
 
-    // جلب آخر فعالية تمت إضافتها
     const newEvent = await db.query.events.findFirst({
       orderBy: (events, { desc }) => [desc(events.id)],
     });
@@ -83,7 +76,6 @@ export const createEvent = async (req, res) => {
       });
     }
 
-    // حفظ الصور إن وجدت
     if (req.files && req.files.length > 0) {
       const types = ["event_poster", "speaker_image"];
       for (let i = 0; i < req.files.length; i++) {
@@ -203,11 +195,11 @@ export const updateEvent = async (req, res) => {
 
       if (req.files && req.files.length > 0) {
         const { hasNewPoster, hasNewSpeaker } = req.body;
-        let fileIndex = 0; // مؤشر لترتيب الملفات المرفوعة في req.files
+        let fileIndex = 0; 
 
-        //  الحالة الأولى: إذا قام المستخدم برفع غلاف (Poster) جديد
+        
         if (hasNewPoster === "true" && req.files[fileIndex]) {
-          // أ) نبحث عن الغلاف القديم في قاعدة البيانات
+         
           const oldPoster = await tx.query.eventMedia.findFirst({
             where: (em, { and, eq }) =>
               and(
@@ -216,30 +208,26 @@ export const updateEvent = async (req, res) => {
               ),
           });
 
-          // ب) إذا وجدنا غلافاً قديماً، نحذفه من الملفات ومن قاعدة البيانات
           if (oldPoster) {
             const filePath = path.join(
               process.cwd(),
               oldPoster.mediaUrl.replace(/^\/+/, ""),
             );
-            if (fs.existsSync(filePath)) fs.unlinkSync(filePath); // حذفه من الجهاز
-            await tx.delete(eventMedia).where(eq(eventMedia.id, oldPoster.id)); // حذفه من الداتابيز
+            if (fs.existsSync(filePath)) fs.unlinkSync(filePath); 
+            await tx.delete(eventMedia).where(eq(eventMedia.id, oldPoster.id)); 
           }
 
-          // ج) نقوم بإدخال الغلاف الجديد الذي رفعه المستخدم الآن
           await tx.insert(eventMedia).values({
             event_id: Number(id),
             mediaUrl: `/uploads/${req.files[fileIndex].filename}`,
             mediaType: "event_poster",
           });
 
-          // نزيد المؤشر بمقدار 1 لأننا استهلكنا أول ملف في المصفوفة
+        
           fileIndex++;
         }
 
-        //  الحالة الثانية: إذا قام المستخدم برفع صورة متحدث (Speaker) جديدة
         if (hasNewSpeaker === "true" && req.files[fileIndex]) {
-          // أ) نبحث عن صورة المتحدث القديمة في قاعدة البيانات
           const oldSpeaker = await tx.query.eventMedia.findFirst({
             where: (em, { and, eq }) =>
               and(
@@ -248,17 +236,15 @@ export const updateEvent = async (req, res) => {
               ),
           });
 
-          // ب) إذا وجدناها، نحذفها من الجهاز ومن قاعدة البيانات
           if (oldSpeaker) {
             const filePath = path.join(
               process.cwd(),
               oldSpeaker.mediaUrl.replace(/^\/+/, ""),
             );
-            if (fs.existsSync(filePath)) fs.unlinkSync(filePath); // حذفه من الجهاز
-            await tx.delete(eventMedia).where(eq(eventMedia.id, oldSpeaker.id)); // حذفه من الداتابيز
+            if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+            await tx.delete(eventMedia).where(eq(eventMedia.id, oldSpeaker.id)); 
           }
 
-          // ج) نقوم بإدخال صورة المتحدث الجديدة
           await tx.insert(eventMedia).values({
             event_id: Number(id),
             mediaUrl: `/uploads/${req.files[fileIndex].filename}`,
